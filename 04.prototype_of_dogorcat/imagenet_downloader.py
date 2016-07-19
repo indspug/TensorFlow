@@ -44,7 +44,7 @@ def download_image(dir, synnet_id, num_get_files):
       continue
 
     # ファイルが存在しない場合はダウンロード
-    image_dl_cmd = 'wget -O ' + filepath + ' ' + url
+    image_dl_cmd = 'wget -t 1 -O' + filepath + ' ' + url
     try:
       status = subprocess.check_call(image_dl_cmd.split(' '))
     except subprocess.CalledProcessError, e:

@@ -25,8 +25,9 @@ def zca_whitening(input_images):
     
     # 全画像に対して正規化を行う
     count = 0
+    image_matrix = None
     for image in input_images:
-        mean = numpy.mean(image) # 平均値
+        mean = numpy.mean(image)    # 平均値
         var = numpy.var(image)      # 分散
         meaned_image = (image-mean) / float(numpy.sqrt(var))
         flatten_image = flatten_matrix(meaned_image)
@@ -36,10 +37,8 @@ def zca_whitening(input_images):
             image_matrix = numpy.r_[image_matrix, flatten_image]
 
         count += 1
-    
+
     # ZCA白色化の変換行列を作成する。
-    print(count)
-    print(image_matrix.shape)
     num_images = float(image_matrix.shape[0])
     sigma = numpy.dot(image_matrix.T, image_matrix)/num_images  # 共分散行列
     U,S,V = numpy.linalg.svd(sigma)                             # 特異値分解
@@ -47,4 +46,4 @@ def zca_whitening(input_images):
     sqrt_S = numpy.sqrt(S + epsilon)
     zca_matrix = numpy.dot(numpy.dot(U, numpy.diag(1.0/sqrt_S)), U.T)
     
-    return numpy.dot(zca_matrix, image_matrix.T) # ZCA白色化を行った画像を返す
+    return numpy.dot(image_matrix, zca_matrix.T) # ZCA白色化を行った画像を返す
