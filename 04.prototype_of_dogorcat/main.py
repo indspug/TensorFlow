@@ -16,9 +16,9 @@ IMAGE_HEIGHT = 28
 BATCH_SIZE = 50
 STEPS = 50
 TRAIN_IMAGE_ROOTDIR = './train_data'
-TRAIN_IMAGE_DIRS = ['pug', 'persian_cat']  # フォルダ名をラベルとする
+TRAIN_IMAGE_DIRS = ['dog', 'cat']  # フォルダ名をラベルとする
 TEST_IMAGE_ROOTDIR = './test_data'
-TEST_IMAGE_DIRS = ['toy_poodle', 'egyptian_cat']  # フォルダ名をラベルとする
+TEST_IMAGE_DIRS = ['dog', 'cat']  # フォルダ名をラベルとする
 CKPT_DIR = './ckpt'
 MODEL_FILENAME = 'model.ckpt'
 
@@ -27,8 +27,6 @@ train_images = []  # 学習用データ-画像
 train_labels = []  # 学習用データ-ラベル
 test_images = []   # テスト用データ-画像
 test_labels = []   # テスト用データ-ラベル
-#train_images = numpy.array([])  # 学習データ-画像
-#train_labels = numpy.array([])  # 学習データ-ラベル
 
 #################################################
 # 学習用データ読込
@@ -127,40 +125,40 @@ if __name__ == '__main__':
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # pugの画像をダウンロード
-        #num_pug_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'pug'), 'n02110958', 2000)
-        #print('%d images of pug are downloaded.' % num_pug_image)
+        num_pug_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'dog'), 'n02110958', 2000)
+        print('%d images of pug are downloaded.' % num_pug_image)
 
         # Miniature poodleの画像をダウンロード
-        num_miniature_poodle_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'miniature_poodle'), 'n02113712', 2000)
+        num_miniature_poodle_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'dog'), 'n02113712', 2000)
         print('%d images of miniature poodle are downloaded.' % num_miniature_poodle_image)
 
         # Large poodleの画像をダウンロード
-        num_large_poodle_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'large_poodle'), 'n02113892', 2000)
+        num_large_poodle_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'dog'), 'n02113892', 2000)
         print('%d images of large poodle are downloaded.' % num_large_poodle_image)
 
         # Standard poodleの画像をダウンロード
-        num_standar_poodle_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'standard_poodle'), 'n02113799', 2000)
+        num_standar_poodle_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'dog'), 'n02113799', 2000)
         print('%d images of large poodle are downloaded.' % num_standar_poodle_image)
 
         # Persian Catの画像をダウンロード
-        #num_persian_cat_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'persian_cat'), 'n02123394', 2000)
-        #print('%d images of persian cat are downloaded.' % num_persian_cat_image)
+        num_persian_cat_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'cat'), 'n02123394', 2000)
+        print('%d images of persian cat are downloaded.' % num_persian_cat_image)
 
         # Tiger catの画像をダウンロード
-        num_tiger_cat_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'tiger_cat'), 'n02123159', 2000)
+        num_tiger_cat_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'cat'), 'n02123159', 2000)
         print('%d images of tiger cat are downloaded.' % num_tiger_cat_image)
 
         # tomcatの画像をダウンロード
-        num_tomcat_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'tomcat'), 'n02122725', 2000)
+        num_tomcat_image = downloader.download_image(os.path.join(TRAIN_IMAGE_ROOTDIR, 'cat'), 'n02122725', 2000)
         print('%d images of tomcat are downloaded.' % num_tomcat_image)
 
         # toy poodleの画像をダウンロード
-        #num_toy_poodle = _image = downloader.download_image(os.path.join(TEST_IMAGE_ROOTDIR, 'toy_poodle'), 'n02113624', 2000)
-        #print('%d images of toy poodle are downloaded.' % num_toy_poodle)
+        num_toy_poodle = _image = downloader.download_image(os.path.join(TEST_IMAGE_ROOTDIR, 'dog'), 'n02113624', 2000)
+        print('%d images of toy poodle are downloaded.' % num_toy_poodle)
 
         # Egyptian catの画像をダウンロード
-        #num_egyptian_cat_image = downloader.download_image(os.path.join(TEST_IMAGE_ROOTDIR, 'egyptian_cat'), 'n02124075', 2000)
-        #print('%d images of egyptian cat are downloaded.' % num_egyptian_cat_image )
+        num_egyptian_cat_image = downloader.download_image(os.path.join(TEST_IMAGE_ROOTDIR, 'cat'), 'n02124075', 2000)
+        print('%d images of egyptian cat are downloaded.' % num_egyptian_cat_image )
 
 
     elif argvs[1] == 'train':
