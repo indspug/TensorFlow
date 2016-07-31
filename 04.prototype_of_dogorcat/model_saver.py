@@ -7,7 +7,7 @@ import os
 #################################################
 # モデルの保存
 #################################################
-def save_model(session, variables, checkpoint_dir, filename):
+def save_model(session, variables, checkpoint_dir, filename, global_step = 0):
 
     # ディレクトリ作成
     if not os.path.isdir(checkpoint_dir):
@@ -15,7 +15,12 @@ def save_model(session, variables, checkpoint_dir, filename):
 
     filepath = os.path.join(checkpoint_dir, filename)
     saver = tf.train.Saver(variables)
-    saved_path = saver.save(session, filepath)
+
+    if global_step == 0:
+        saved_path = saver.save(session, filepath)
+    else:
+        saved_path = saver.save(session, filepath, global_step = global_step)
+
     return(saved_path)
 
 #################################################
