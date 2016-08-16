@@ -8,14 +8,14 @@ import tensorflow as tf
 import random
 
 # 定数
-FILTER_SIZE1 = 5        # 畳込層1のフィルタサイズ
-FILTER_SIZE2 = 5        # 畳込層2のフィルタサイズ
-FILTER_NUM1 = 32        # 畳込層1のフィルタ数
-FILTER_NUM2 = 64        # 畳込層2のフィルタ数
-WIDTH_RATIO = 4         # 入力画像と全結合層手前の画像高さのサイズ比
-HEIGHT_RATIO = 4        # 入力画像と全結合層手前の画像高さのサイズ比
+#FILTER_SIZE1 = 5        # 畳込層1のフィルタサイズ
+#FILTER_SIZE2 = 5        # 畳込層2のフィルタサイズ
+#FILTER_NUM1 = 32        # 畳込層1のフィルタ数
+#FILTER_NUM2 = 64        # 畳込層2のフィルタ数
+#WIDTH_RATIO = 4         # 入力画像と全結合層手前の画像高さのサイズ比
+#HEIGHT_RATIO = 4        # 入力画像と全結合層手前の画像高さのサイズ比
 RATE_DROPOUT = 0.5      # ドロップアウト率
-STEP_PRINT_ACC = 10     # 正解率を表示する頻度
+STEP_PRINT_ACC = 5     # 正解率を表示する頻度
 
 class DogOrCatModel(AbstractModel):
 
@@ -24,7 +24,7 @@ class DogOrCatModel(AbstractModel):
     #################################################
     def weight_variable(self, shape, name=None):
         # 正規分布に従うランダム値を返す。stddevは標準偏差
-        initial = tf.truncated_normal(shape, stddev=0.1)
+        initial = tf.truncated_normal(shape, stddev=0.01)
         return tf.Variable(initial, name)
 
     #################################################
@@ -53,74 +53,89 @@ class DogOrCatModel(AbstractModel):
                               strides=[1, 2, 2, 1], padding='SAME')
 
     #################################################
-    # ファイルに読み書きするVariableを初期化する
+    # Variableを初期化する
     #################################################
-    def initialize_saveable_variables(self):
-        # First Convolutional Layer
-        self.W_conv1 = self.weight_variable([FILTER_SIZE1, FILTER_SIZE1, self.color_channels, FILTER_NUM1], name='W_conv1')
-        self.b_conv1 = self.bias_variable([FILTER_NUM1], name='b_conv1')
-
-        # Second Convolutional Layer
-        self.W_conv2 = self.weight_variable([FILTER_SIZE2, FILTER_SIZE2, FILTER_NUM1, FILTER_NUM2], name='W_conv2')
-        self.b_conv2 = self.bias_variable([FILTER_NUM2], name='b_conv2')
-
-        # Densely Connected Layer(全結合層)
-        # 入力を3次元から1次元のテンソルに変更
-        self.W_fc1 = self.weight_variable([self.image_width/WIDTH_RATIO * self.image_height/HEIGHT_RATIO * FILTER_NUM2, 1024], name='W_fc1')
-        self.b_fc1 = self.bias_variable([1024], name='b_fc1')
-
-        # Readout Leyer(出力層)
-        self.W_fc2 = self.weight_variable([1024, self.num_classes], name='W_fc2')
-        self.b_fc2 = self.bias_variable([self.num_classes], name='b_fc2')
-
-    #################################################
-    # ファイルに読み書きするVariableを取得する。
-    #################################################
-    def get_saveable_variables(self):
-        return([self.W_conv1, self.b_conv1, self.W_conv2, self.b_conv2,
-                self.W_fc1, self.b_fc1, self.W_fc2, self.b_fc2]
-        )
-
-    #################################################
-    # 計算途中で使用するVariableを初期化する
-    #################################################
-    def initialize_temporary_variables(self):
+    def initialize_variables(self):
 
         # 入力データ格納用Variable作成
-        num_elm_x = self.image_width * self.image_height * self.color_channels
+        num_elm_x = 227 * 227 * self.color_channels
         self.x = tf.placeholder(tf.float32, [None, num_elm_x])
 
         # 正解データ格納用Variable作成
         self.y_ = tf.placeholder(tf.float32, [None, self.num_classes])
 
         # First Convolutional Layerの入力
-        x_image = tf.reshape(self.x, [-1, self.image_width, self.image_height, self.color_channels])
+        x_image = tf.reshape(self.x, [-1, 227, 227, self.color_channels])
 
-        # First Convolutional Layerの計算
-        h_conv1 = tf.nn.relu(self.conv2d(x_image, self.W_conv1) + self.b_conv1)
-        h_pool1 = self.max_pool(h_conv1)
+        # First Convolutional Layer
+        with tf.variable_scope('conv1') as scope:
+            self.W_conv1 = self.weight_variable([11, 11, 3, 96], name='W_conv1')
+            self.b_conv1 = self.bias_variable([96], name='b_conv1')
+            h_conv1 = tf.nn.conv2d(x_image, self.W_conv1, strides=[1, 4, 4, 1], padding='VALID')
+            h_relu1 = tf.nn.relu(h_conv1 + self.b_conv1)
+        h_pool1 = tf.nn.max_pool(h_relu1, ksize=[1, 3, 3, 1],
+                                 strides=[1, 2, 2, 1], padding='VALID')
+        h_norm1 = tf.nn.lrn(h_pool1, 5, bias=1.0, alpha=0.0001, beta=0.75)
 
-        # Second Convolutional Layerの計算
-        h_conv2 = tf.nn.relu(self.conv2d(h_pool1, self.W_conv2) + self.b_conv2)
-        h_pool2 = self.max_pool(h_conv2)
+        # Second Convolutional Layer
+        with tf.variable_scope('conv2') as scope:
+            self.W_conv2 = self.weight_variable([5, 5, 96, 256], name='W_conv2')
+            self.b_conv2 = self.bias_variable([256], name='b_conv2')
+            h_conv2 =  tf.nn.conv2d(h_norm1, self.W_conv2, strides=[1, 1, 1, 1], padding='SAME')
+            h_relu2 = tf.nn.relu(h_conv2 + self.b_conv2)
+        h_pool2 = tf.nn.max_pool(h_relu2, ksize=[1, 3, 3, 1],
+                                strides=[1, 2, 2, 1], padding='VALID')
+        h_norm2 = tf.nn.lrn(h_pool2, 5, bias=1.0, alpha=0.0001, beta=0.75)
 
-        # Second Convolutional Layerの出力を
-        # 入力を3次元から1次元のテンソルに変更
-        h_pool2_flat = tf.reshape(h_pool2, [-1, self.image_width/WIDTH_RATIO * self.image_height/HEIGHT_RATIO * FILTER_NUM2])
+        # Third Convolutional Layer
+        with tf.variable_scope('conv3') as scope:
+            self.W_conv3 = self.weight_variable([3, 3,  256,  384], name='W_conv3')
+            self.b_conv3 = self.bias_variable([384], name='b_conv3')
+            h_conv3 =  tf.nn.conv2d(h_norm2, self.W_conv3, strides=[1, 1, 1, 1], padding='SAME')
+            h_relu3 = tf.nn.relu(h_conv3 + self.b_conv3)
 
-        # h_pool2_flatとW_fc1を乗算し、バイアスを加算した値に
-        # ReLUを適用する。
-        h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat , self.W_fc1) + self.b_fc1)
+        # Fourth Convolutional Layer
+        with tf.variable_scope('conv4') as scope:
+            self.W_conv4 = self.weight_variable([3, 3,  384,  384], name='W_conv4')
+            self.b_conv4 = self.bias_variable([384], name='b_conv4')
+            h_conv4 =  tf.nn.conv2d(h_relu3, self.W_conv4, strides=[1, 1, 1, 1], padding='SAME')
+            h_relu4 = tf.nn.relu(h_conv4 + self.b_conv4)
+
+        # Fifth Convolutional Layer
+        with tf.variable_scope('conv5') as scope:
+            self.W_conv5 = self.weight_variable([3, 3,  384,  256], name='W_conv5')
+            self.b_conv5 = self.bias_variable([256], name='b_conv5')
+            h_conv5 =  tf.nn.conv2d(h_relu4, self.W_conv5, strides=[1, 1, 1, 1], padding='SAME')
+            h_relu5 = tf.nn.relu(h_conv5 + self.b_conv5)
+        h_pool5 = tf.nn.max_pool(h_relu5, ksize=[1, 3, 3, 1],
+                                strides=[1, 2, 2, 1], padding='VALID')
+        h_pool5_flat = tf.reshape(h_pool5, [-1, 6 * 6 * 256])
+
+        # Densely Connected Layer(全結合層)
+        with tf.variable_scope('fc1') as scope:
+            self.W_fc1 = self.weight_variable([6 * 6 * 256, 4096], name='W_fc1')
+            self.b_fc1 = self.bias_variable([4096], name='b_fc1')
+            h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat , self.W_fc1) + self.b_fc1)
 
         # ドロップアウトを使用する場合のドロップアウト率。
         self.keep_prob = tf.placeholder(tf.float32)
-
-        # h_fc1に対してドロップアウトを適用する。
         h_fc1_drop = tf.nn.dropout(h_fc1, self.keep_prob)
 
         # Readout Leyer(出力層)
-        self.y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop, self.W_fc2) + self.b_fc2)
+        with tf.variable_scope('fc2') as scope:
+            self.W_fc2 = self.weight_variable([4096, self.num_classes], name='W_fc2')
+            self.b_fc2 = self.bias_variable([self.num_classes], name='b_fc2')
+            self.y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop, self.W_fc2) + self.b_fc2)
 
+    #################################################
+    # ファイルに読み書きするVariableを取得する。
+    #################################################
+    def get_saveable_variables(self):
+        return([self.W_conv1, self.b_conv1, self.W_conv2, self.b_conv2,
+                self.W_conv3, self.b_conv3, self.W_conv4, self.b_conv4,
+                self.W_conv5, self.b_conv5,
+                self.W_fc1, self.b_fc1, self.W_fc2, self.b_fc2]
+        )
 
     #################################################
     # クロスエントロピーを返す
@@ -129,7 +144,8 @@ class DogOrCatModel(AbstractModel):
     #################################################
     def get_cross_entropy(self):
         # 誤差関数=クロスエントロピー
-        cross_entropy = tf.reduce_mean(-tf.reduce_sum(self.y_ * tf.log(self.y_conv), reduction_indices=[1]))
+        cross_entropy = tf.reduce_mean(
+            -tf.reduce_sum(self.y_ * tf.log(self.y_conv), reduction_indices=[1], name='sum'), name='cross_entropy')
         return(cross_entropy)
 
     #################################################
@@ -138,10 +154,10 @@ class DogOrCatModel(AbstractModel):
     #    cross_entropy:
     # [Returns]:
     #    train_step:
-	#################################################
+    #################################################
     def get_train_step(self, cross_entropy):
         # Adam Algorithmで学習係数=0.00001
-        train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy)
+        train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy, name='train_step')
         return(train_step)
 
     #################################################
@@ -152,17 +168,19 @@ class DogOrCatModel(AbstractModel):
     #    steps      :学習ステップ
     #    batch_size :バッチサイズ
     #    save_step  :モデルを保存する周期
+    #    start_step :学習開始のステップ
     #################################################
-    def train(self, images, labels, steps, batch_size, save_step):
+    def train(self, images, labels, steps, batch_size, save_step, start_step):
 
         # 正解率
         correct_prediction = tf.equal(tf.argmax(self.y_conv, 1), tf.argmax(self.y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
+        # データ数取得
         num_data = len(images)
 
         # 指定したステップ数の学習を行う
-        for step in range(steps):
+        for step in range(start_step, steps):
 
             # アクセスする画像はランダムにする。
             random_i = range(num_data)
@@ -188,9 +206,8 @@ class DogOrCatModel(AbstractModel):
 
                 # 正解率表示
                 if (step % STEP_PRINT_ACC == 0) and (count == 0):
-                    train_accuracy = self.session.run(accuracy,
-                                                      feed_dict={self.x: train_image_batch, self.y_: train_label_batch,
-                                                                 self.keep_prob: 1.0})
+                    feed_dict = {self.x: train_image_batch, self.y_: train_label_batch, self.keep_prob: 1.0}
+                    train_accuracy = self.session.run(accuracy, feed_dict=feed_dict)
                     print("step %d, training accuracy %g" % (step, train_accuracy))
 
             # 指定したstep毎にモデルを保存する。

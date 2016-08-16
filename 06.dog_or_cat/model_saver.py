@@ -64,12 +64,14 @@ def exists_checkpoint(checkpoint_dir, filename):
 
     filepath = os.path.join(checkpoint_dir, filename)
 
-    # 指定したファイルパスがチェックポイントに格納されているか検索する。
-    ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
-    exists = False
-    for read_filename in ckpt.all_model_checkpoint_paths:
-        if read_filename == filepath:
-            exists = True
-            break
+    # 任意のチェックポイントを読み込むため、checkpointの使用は一旦やめる。
+    return (os.path.isfile(filepath))
 
-    return(exists)
+    # 指定したファイルパスがチェックポイントに格納されているか検索する。
+#    ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+#    exists = False
+#    for read_filename in ckpt.all_model_checkpoint_paths:
+#        if read_filename == filepath:
+#            exists = True
+#            break
+#    return(exists)

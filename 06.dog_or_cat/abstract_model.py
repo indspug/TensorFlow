@@ -13,10 +13,10 @@ class AbstractModel(object):
     __metaclass__ = ABCMeta
 
     #################################################
-    # ファイルに読み書きするVariableを初期化する
+    # Variableを初期化する
     #################################################
     @abstractmethod
-    def initialize_saveable_variables(self):
+    def initialize_variables(self):
         pass
 
     #################################################
@@ -24,13 +24,6 @@ class AbstractModel(object):
     #################################################
     @abstractmethod
     def get_saveable_variables(self):
-        pass
-
-    #################################################
-    # 計算途中で使用するVariableを初期化する
-    #################################################
-    @abstractmethod
-    def initialize_temporary_variables(self):
         pass
 
     #################################################
@@ -75,17 +68,18 @@ class AbstractModel(object):
     def construct(self):
 
         # Variableを初期化する
-        self.initialize_saveable_variables()
-        self.initialize_temporary_variables()
+        self.initialize_variables()
 
         # 誤差関数=クロスエントロピー
         cross_entropy = self.get_cross_entropy()
 
-        #
+        # 学習ステップ生成
         self.train_step = self.get_train_step(cross_entropy)
 
         # セッション生成
         self.session = tf.Session()
+
+        # Variableの初期化
         init = tf.initialize_all_variables()
         self.session.run(init)
 
@@ -95,7 +89,7 @@ class AbstractModel(object):
     def load(self):
 
         # Variableの初期化
-        self.initialize_saveable_variables()
+        self.initialize_variables()
 
         # セッション生成
         self.session = tf.Session()
@@ -105,8 +99,16 @@ class AbstractModel(object):
         checkpoint_file = os.path.basename(self.checkpoint)
         model_saver.restore_model(self.session, checkpoint_dir, checkpoint_file)
 
-        # Variableの初期化
-        self.initialize_temporary_variables()
+    #################################################
+    # 学習の準備
+    #################################################
+    def ready_for_train(self):
+
+        # 誤差関数=クロスエントロピー
+        cross_entropy = self.get_cross_entropy()
+
+        # 学習ステップ生成
+        self.train_step = self.get_train_step(cross_entropy)
 
     #################################################
     # モデルを保存する
