@@ -58,63 +58,63 @@ class DogOrCatModel(AbstractModel):
     def initialize_variables(self):
 
         # 入力データ格納用Variable作成
-        num_elm_x = 227 * 227 * self.color_channels
+        num_elm_x = 30 * 30 * self.color_channels
         self.x = tf.placeholder(tf.float32, [None, num_elm_x])
 
         # 正解データ格納用Variable作成
         self.y_ = tf.placeholder(tf.float32, [None, self.num_classes])
 
         # First Convolutional Layerの入力
-        x_image = tf.reshape(self.x, [-1, 227, 227, self.color_channels])
+        x_image = tf.reshape(self.x, [-1, 30, 30, self.color_channels])
 
         # First Convolutional Layer
         with tf.variable_scope('conv1') as scope:
-            self.W_conv1 = self.weight_variable([11, 11, 3, 96], name='W_conv1')
-            self.b_conv1 = self.bias_variable([96], name='b_conv1')
-            h_conv1 = tf.nn.conv2d(x_image, self.W_conv1, strides=[1, 4, 4, 1], padding='VALID')
+            self.W_conv1 = self.weight_variable([3, 3, 3, 256], name='W_conv1')
+            self.b_conv1 = self.bias_variable([256], name='b_conv1')
+            h_conv1 = tf.nn.conv2d(x_image, self.W_conv1, strides=[1, 1, 1, 1], padding='VALID')
             h_relu1 = tf.nn.relu(h_conv1 + self.b_conv1)
-        h_pool1 = tf.nn.max_pool(h_relu1, ksize=[1, 3, 3, 1],
+        h_pool1 = tf.nn.max_pool(h_relu1, ksize=[1, 2, 2, 1],
                                  strides=[1, 2, 2, 1], padding='VALID')
-        h_norm1 = tf.nn.lrn(h_pool1, 5, bias=1.0, alpha=0.0001, beta=0.75)
+        #h_norm1 = tf.nn.lrn(h_pool1, 5, bias=1.0, alpha=0.0001, beta=0.75)
 
         # Second Convolutional Layer
         with tf.variable_scope('conv2') as scope:
-            self.W_conv2 = self.weight_variable([5, 5, 96, 256], name='W_conv2')
-            self.b_conv2 = self.bias_variable([256], name='b_conv2')
-            h_conv2 =  tf.nn.conv2d(h_norm1, self.W_conv2, strides=[1, 1, 1, 1], padding='SAME')
+            self.W_conv2 = self.weight_variable([3, 3, 256, 512], name='W_conv2')
+            self.b_conv2 = self.bias_variable([512], name='b_conv2')
+            h_conv2 =  tf.nn.conv2d(h_pool1, self.W_conv2, strides=[1, 1, 1, 1], padding='VALID')
             h_relu2 = tf.nn.relu(h_conv2 + self.b_conv2)
-        h_pool2 = tf.nn.max_pool(h_relu2, ksize=[1, 3, 3, 1],
+        h_pool2 = tf.nn.max_pool(h_relu2, ksize=[1, 2, 2, 1],
                                 strides=[1, 2, 2, 1], padding='VALID')
-        h_norm2 = tf.nn.lrn(h_pool2, 5, bias=1.0, alpha=0.0001, beta=0.75)
+        #h_norm2 = tf.nn.lrn(h_pool2, 5, bias=1.0, alpha=0.0001, beta=0.75)
 
         # Third Convolutional Layer
-        with tf.variable_scope('conv3') as scope:
-            self.W_conv3 = self.weight_variable([3, 3,  256,  384], name='W_conv3')
-            self.b_conv3 = self.bias_variable([384], name='b_conv3')
-            h_conv3 =  tf.nn.conv2d(h_norm2, self.W_conv3, strides=[1, 1, 1, 1], padding='SAME')
-            h_relu3 = tf.nn.relu(h_conv3 + self.b_conv3)
+        #with tf.variable_scope('conv3') as scope:
+            #self.W_conv3 = self.weight_variable([3, 3,  256,  384], name='W_conv3')
+            #self.b_conv3 = self.bias_variable([384], name='b_conv3')
+            #h_conv3 =  tf.nn.conv2d(h_norm2, self.W_conv3, strides=[1, 1, 1, 1], padding='SAME')
+            #h_relu3 = tf.nn.relu(h_conv3 + self.b_conv3)
 
         # Fourth Convolutional Layer
-        with tf.variable_scope('conv4') as scope:
-            self.W_conv4 = self.weight_variable([3, 3,  384,  384], name='W_conv4')
-            self.b_conv4 = self.bias_variable([384], name='b_conv4')
-            h_conv4 =  tf.nn.conv2d(h_relu3, self.W_conv4, strides=[1, 1, 1, 1], padding='SAME')
-            h_relu4 = tf.nn.relu(h_conv4 + self.b_conv4)
+        #with tf.variable_scope('conv4') as scope:
+            #self.W_conv4 = self.weight_variable([3, 3,  384,  384], name='W_conv4')
+            #self.b_conv4 = self.bias_variable([384], name='b_conv4')
+            #h_conv4 =  tf.nn.conv2d(h_relu3, self.W_conv4, strides=[1, 1, 1, 1], padding='SAME')
+            #h_relu4 = tf.nn.relu(h_conv4 + self.b_conv4)
 
         # Fifth Convolutional Layer
-        with tf.variable_scope('conv5') as scope:
-            self.W_conv5 = self.weight_variable([3, 3,  384,  256], name='W_conv5')
-            self.b_conv5 = self.bias_variable([256], name='b_conv5')
-            h_conv5 =  tf.nn.conv2d(h_relu4, self.W_conv5, strides=[1, 1, 1, 1], padding='SAME')
-            h_relu5 = tf.nn.relu(h_conv5 + self.b_conv5)
-        h_pool5 = tf.nn.max_pool(h_relu5, ksize=[1, 3, 3, 1],
-                                strides=[1, 2, 2, 1], padding='VALID')
-        h_pool5_flat = tf.reshape(h_pool5, [-1, 6 * 6 * 256])
+        #with tf.variable_scope('conv5') as scope:
+            #self.W_conv5 = self.weight_variable([3, 3,  384,  256], name='W_conv5')
+            #self.b_conv5 = self.bias_variable([256], name='b_conv5')
+            #h_conv5 =  tf.nn.conv2d(h_relu4, self.W_conv5, strides=[1, 1, 1, 1], padding='SAME')
+            #h_relu5 = tf.nn.relu(h_conv5 + self.b_conv5)
+        #h_pool5 = tf.nn.max_pool(h_relu5, ksize=[1, 3, 3, 1],
+        #                        strides=[1, 2, 2, 1], padding='VALID')
+        h_pool5_flat = tf.reshape(h_pool2, [-1, 6 * 6 * 512])
 
         # Densely Connected Layer(全結合層)
         with tf.variable_scope('fc1') as scope:
-            self.W_fc1 = self.weight_variable([6 * 6 * 256, 4096], name='W_fc1')
-            self.b_fc1 = self.bias_variable([4096], name='b_fc1')
+            self.W_fc1 = self.weight_variable([6 * 6 * 512, 2048], name='W_fc1')
+            self.b_fc1 = self.bias_variable([2048], name='b_fc1')
             h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat , self.W_fc1) + self.b_fc1)
 
         # ドロップアウトを使用する場合のドロップアウト率。
@@ -123,7 +123,7 @@ class DogOrCatModel(AbstractModel):
 
         # Readout Leyer(出力層)
         with tf.variable_scope('fc2') as scope:
-            self.W_fc2 = self.weight_variable([4096, self.num_classes], name='W_fc2')
+            self.W_fc2 = self.weight_variable([2048, self.num_classes], name='W_fc2')
             self.b_fc2 = self.bias_variable([self.num_classes], name='b_fc2')
             self.y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop, self.W_fc2) + self.b_fc2)
 
@@ -132,8 +132,8 @@ class DogOrCatModel(AbstractModel):
     #################################################
     def get_saveable_variables(self):
         return([self.W_conv1, self.b_conv1, self.W_conv2, self.b_conv2,
-                self.W_conv3, self.b_conv3, self.W_conv4, self.b_conv4,
-                self.W_conv5, self.b_conv5,
+                #self.W_conv3, self.b_conv3, self.W_conv4, self.b_conv4,
+                #self.W_conv5, self.b_conv5,
                 self.W_fc1, self.b_fc1, self.W_fc2, self.b_fc2]
         )
 
@@ -156,8 +156,9 @@ class DogOrCatModel(AbstractModel):
     #    train_step:
     #################################################
     def get_train_step(self, cross_entropy):
-        # Adam Algorithmで学習係数=0.00001
-        train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy, name='train_step')
+        # AdamOptimizerだと学習の再開が出来ないため、GradientDescentOptimizerに変更
+        #train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy, name='train_step')
+        train_step = tf.train.GradientDescentOptimizer(1e-4).minimize(cross_entropy, name='train_step')
         return(train_step)
 
     #################################################

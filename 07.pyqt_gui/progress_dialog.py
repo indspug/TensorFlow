@@ -19,6 +19,7 @@ class ProgressDialog(QDialog):
     #################################################
     def __init__(self, parent=None):
         super(ProgressDialog, self).__init__(parent)
+        self.working = False
         self.init_widgets()
 
     #################################################
@@ -39,9 +40,7 @@ class ProgressDialog(QDialog):
         self.prgsBar.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         layout.addWidget(self.prgsBar)
 
-        # Title
         self.setWindowTitle('画像識別')
-
         self.setLayout(layout)
 
     #################################################
@@ -59,13 +58,13 @@ class ProgressDialog(QDialog):
         self.step = 0
         self.prgsBar.setValue(self.step)
 
+        # ダイアログ表示
         super(ProgressDialog, self).show()
 
     #################################################
     # タイマーイベント
     #################################################
     def timerEvent(self):
-
         self.step += 1
         self.prgsBar.setValue(self.step)
 
@@ -73,9 +72,5 @@ class ProgressDialog(QDialog):
     # 終了
     #################################################
     def close(self):
-        print('close')
-
-        self.timer.stop()
         super(ProgressDialog, self).close()
-
 

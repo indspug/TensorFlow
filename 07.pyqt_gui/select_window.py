@@ -20,7 +20,7 @@ from result_window import ResultWindow
 DEMO_EXE_PATH = '../06.dog_or_cat/main.py demo'
 IMAGE_DIR = './image'
 CKPT_DIR = '../06.dog_or_cat/ckpt'
-SCORE_CSV = './score.csv'
+RESULT_CSV = './score.csv'
 
 
 #################################################
@@ -86,7 +86,8 @@ class SelectWindow(QWidget):
         imagePath = os.path.join(IMAGE_DIR, image)
         ckpt = self.ckptSlctBox.get_checkpoint_name()
         ckptPath = os.path.join(CKPT_DIR, ckpt)
-        cmd = 'python ' + DEMO_EXE_PATH + ' ' + ckptPath + ' ' + imagePath
+        resultPath = RESULT_CSV
+        cmd = 'python ' + DEMO_EXE_PATH + ' ' + ckptPath + ' ' + imagePath + ' ' + resultPath
 
         # 識別実行
         try:
@@ -101,7 +102,7 @@ class SelectWindow(QWidget):
         #self.dialog.close()
 
         # スコアをCSVから取得
-        fin = open(SCORE_CSV, 'r')
+        fin = open(resultPath, 'r')
         csvReader = csv.reader(fin)
         for row in csvReader:
             score = row

@@ -10,14 +10,13 @@ import image_editor
 from dog_or_cat_model import DogOrCatModel
 
 # 定数
-IMAGE_WIDTH = 227   # 入力画像の幅
-IMAGE_HEIGHT = 227  # 入力画像の高さ
+IMAGE_WIDTH = 30    # 入力画像の幅
+IMAGE_HEIGHT = 30   # 入力画像の高さ
 COLOR_CHANNELS = 3  # カラーチャンネルの数
 NUM_CLASSES = 2     # 正解(ラベル)の数(種類)
 BATCH_SIZE = 20     # バッチサイズ
-STEPS = 10000       # 学習ステップ
+STEPS = 1000        # 学習ステップ
 SAVE_STEP = 50      # 一定ステップごとにモデルを保存する
-SCORE_FILE = './score.csv'  # スコア出力先CSV
 
 #################################################
 # ログ出力
@@ -36,12 +35,14 @@ def write_log(message):
 def print_usage(exe_name):
     print('Usage: # python %s train [checkpoint] [image_dir] [continuation] [start_step]' % exe_name)
     print('Usage: # python %s test  [checkpoint] [image_dir]' % exe_name)
-    print('Usage: # python %s demo  [checkpoint] [imagefile]' % exe_name)
+    print('Usage: # python %s demo  [checkpoint] [imagefile] [resultfile]' % exe_name)
     print('  checkpoint   : filepath of checkpoint.')
     print('  image_dir    : root directory of image directories.')
     print('  continuation : whether to continue training or not (optional).')
     print('  start_step   : number of start step. only needed when continuation set (optional).')
     print('  imagefile    : filepath of imagefile for demo.')
+    print('  resultfile   : demo result filepath.')
+
 
 #################################################
 # 学習実行
@@ -119,8 +120,9 @@ def test(checkpoint_path, test_image_rootdir):
 # [Args]:
 #    checkpoint_path :チェックポイントのファイルパス
 #    imagefile_path  :デモ用画像のファイルパス
+#    resultfile_path :識別結果出力先ファイルパス
 #################################################
-def demo(checkpoint_path, imagefile_path):
+def demo(checkpoint_path, imagefile_path, resultfile_path):
 
     # デモ用画像の読込みとリサイズ
     images = image_editor.get_images([imagefile_path])
@@ -146,9 +148,9 @@ def demo(checkpoint_path, imagefile_path):
                 print('dog=%.1f%%'  % (rate*100))
 
     # スコアをCSVに出力
-    fout = open(SCORE_FILE, 'w')
+    fout = open(resultfile_path, 'w')
     csvWriter = csv.writer(fout)
-    csvWriter.writerow(scores[0])
+    csvWriter.writerows(scores)
     fout.close()
 
 #################################################
@@ -211,14 +213,15 @@ if __name__ == '__main__':
     elif mode == 'demo':
 
         # コマンドライン引数取得
-        if argc < 4:
+        if argc < 5:
             print_usage(argvs[0])
             quit()
 
         checkpoint_path = argvs[2]
         imagefile_path = argvs[3]
+        resultfile_path = argvs[4]
 
-        demo(checkpoint_path, imagefile_path)
+        demo(checkpoint_path, imagefile_path, resultfile_path)
 
     else:
         print_usage(argvs[0])

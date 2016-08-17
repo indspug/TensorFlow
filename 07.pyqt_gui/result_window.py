@@ -8,7 +8,7 @@ import sys
 import subprocess
 import PyQt5
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, \
+from PyQt5.QtWidgets import QApplication, QWidget, QDialog, QPushButton, QLabel, \
                             QGridLayout, QHBoxLayout, QVBoxLayout, QSizePolicy
 from PyQt5.QtGui import QPixmap, QFont
 
@@ -21,7 +21,7 @@ IMAGE_HEIGHT = 256
 #################################################
 # 結果画面
 #################################################
-class ResultWindow(QWidget):
+class ResultWindow(QDialog):
 
     #################################################
     # コンストラクタ
