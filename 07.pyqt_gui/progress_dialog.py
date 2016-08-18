@@ -3,23 +3,61 @@
 # progress_dialog.py
 
 # import
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QDialog, QLabel, QProgressBar, QSizePolicy, QVBoxLayout
+import subprocess
+from PyQt5 import QtCore
+from PyQt5.QtCore import QTimer, QThread, pyqtSignal
+from PyQt5.QtWidgets import (QDialog, QLabel, QProgressBar, QSizePolicy, QVBoxLayout, QMessageBox)
 
 # Constant
-MAX_RANGE = 10
+DEMO_EXE_PATH = '../06.dog_or_cat/main.py demo'
+MAX_RANGE = 20
+
+#################################################
+# 画面識別スレッド
+#################################################
+class IdentifyThread(QThread):
+
+    sig_status = QtCore.pyqtSignal(long)
+
+    def __init__(self, imagePath, ckptPath, resultPath, parent=None):
+        super(IdentifyThread, self).__init__(parent)
+        self.imagePath = imagePath
+        self.ckptPath = ckptPath
+        self.resultPath = resultPath
+        self.stopped = False
+        self.mutex = QtCore.QMutex()
+
+    def run(self):
+        cmd = 'python ' + DEMO_EXE_PATH + ' ' + self.ckptPath + ' ' + self.imagePath + ' ' + self.resultPath
+
+        # 識別実行
+        try:
+            status = subprocess.check_call(cmd.split(' '))
+        except subprocess.CalledProcessError, e:
+            status = e.returncode
+
+        if status != 0:
+            reply = QMessageBox.warning(self, 'Error', '画像識別に失敗しました')
+
+        # 終了を通知
+        self.finished.emit()
+
 
 #################################################
 # 画像識別進捗画面
 #################################################
 class ProgressDialog(QDialog):
 
+    signal = pyqtSignal()
+
     #################################################
     # コンストラクタ
     #################################################
-    def __init__(self, parent=None):
+    def __init__(self, imagePath, ckptPath, resultPath, parent=None):
         super(ProgressDialog, self).__init__(parent)
-        self.working = False
+        self.imagePath = imagePath
+        self.ckptPath = ckptPath
+        self.resultPath = resultPath
         self.init_widgets()
 
     #################################################
@@ -48,9 +86,9 @@ class ProgressDialog(QDialog):
     #################################################
     def show(self):
 
-        # Timer 1秒周期で10%進捗を進める
+        # Timer 200ミリ秒周期で5%進捗を進める
         self.timer = QTimer(self)
-        self.timer.setInterval(1000)
+        self.timer.setInterval(200)
         self.timer.timeout.connect(self.timerEvent)
         self.timer.start()
 
@@ -58,8 +96,23 @@ class ProgressDialog(QDialog):
         self.step = 0
         self.prgsBar.setValue(self.step)
 
+        # 識別開始
+        self.thread = IdentifyThread(self.imagePath, self.ckptPath, self.resultPath)
+        self.thread.finished.connect(self.identify_finished)
+        self.thread.start()
+
         # ダイアログ表示
         super(ProgressDialog, self).show()
+
+    #################################################
+    # 識別終了イベント
+    #################################################
+    def identify_finished(self):
+        if (self.thread is not None):
+            self.thread.wait()
+        self.thread = None
+        self.signal.emit()
+        self.close()
 
     #################################################
     # タイマーイベント

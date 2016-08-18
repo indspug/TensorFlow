@@ -10,12 +10,12 @@ import image_editor
 from dog_or_cat_model import DogOrCatModel
 
 # 定数
-IMAGE_WIDTH = 30    # 入力画像の幅
-IMAGE_HEIGHT = 30   # 入力画像の高さ
+IMAGE_WIDTH = 135    # 入力画像の幅
+IMAGE_HEIGHT = 135   # 入力画像の高さ
 COLOR_CHANNELS = 3  # カラーチャンネルの数
 NUM_CLASSES = 2     # 正解(ラベル)の数(種類)
 BATCH_SIZE = 20     # バッチサイズ
-STEPS = 1000        # 学習ステップ
+STEPS = 1000         # 学習ステップ
 SAVE_STEP = 50      # 一定ステップごとにモデルを保存する
 
 #################################################

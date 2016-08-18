@@ -38,8 +38,6 @@ class ResultWindow(QDialog):
 
         layout = QGridLayout()
 
-        print(self.score)
-
         # String -> Float
         catScore = float(self.score[0])*100
         dogScore = float(self.score[1])*100

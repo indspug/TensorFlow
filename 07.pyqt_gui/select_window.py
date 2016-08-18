@@ -7,7 +7,7 @@ import os
 import sys
 import subprocess
 import csv
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, \
                             QHBoxLayout, QVBoxLayout, QMessageBox, \
                             QDialog
@@ -77,31 +77,27 @@ class SelectWindow(QWidget):
     #################################################
     def identify(self):
 
-        # 進捗画面の表示が上手くいかないのでコメントアウト
-        #self.dialog = ProgressDialog(self)
-        #self.dialog.show()
-
         # 画像ファイル名とチェックポイント名取得
         image = self.imgSlctBox.get_image_name()
         imagePath = os.path.join(IMAGE_DIR, image)
         ckpt = self.ckptSlctBox.get_checkpoint_name()
         ckptPath = os.path.join(CKPT_DIR, ckpt)
         resultPath = RESULT_CSV
-        cmd = 'python ' + DEMO_EXE_PATH + ' ' + ckptPath + ' ' + imagePath + ' ' + resultPath
-
-        # 識別実行
-        try:
-            status = subprocess.check_call(cmd.split(' '))
-        except subprocess.CalledProcessError, e:
-            status = e.returncode
-
-        if status != 0:
-            reply = QMessageBox.warning(self, 'Error', '画像識別に失敗しました')
 
         # 進捗画面の表示が上手くいかないのでコメントアウト
-        #self.dialog.close()
+        self.dialog = ProgressDialog(imagePath , ckptPath, resultPath, self)
+        self.dialog.signal.connect(self.show_result)
+        #finished = QtCore.pyqtSignal()
+        #QObject.connect(self.dialog, QtCore.SIGNAL("identify_finished()"), self.show_result)
+        self.dialog.show()
+
+    #################################################
+    # 識別終了→結果表示
+    #################################################
+    def show_result(self):
 
         # スコアをCSVから取得
+        resultPath = RESULT_CSV
         fin = open(resultPath, 'r')
         csvReader = csv.reader(fin)
         for row in csvReader:
@@ -119,7 +115,7 @@ class SelectWindow(QWidget):
 if __name__ == '__main__':
 
     # Application
-    app = QtWidgets.QApplication(sys.argv)
+    app = QApplication(sys.argv)
 
     # Window
     window = SelectWindow()

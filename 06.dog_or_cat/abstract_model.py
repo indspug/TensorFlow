@@ -71,10 +71,10 @@ class AbstractModel(object):
         self.initialize_variables()
 
         # 誤差関数=クロスエントロピー
-        cross_entropy = self.get_cross_entropy()
+        self.cross_entropy = self.get_cross_entropy()
 
         # 学習ステップ生成
-        self.train_step = self.get_train_step(cross_entropy)
+        self.train_step = self.get_train_step(self.cross_entropy)
 
         # セッション生成
         self.session = tf.Session()
@@ -105,10 +105,10 @@ class AbstractModel(object):
     def ready_for_train(self):
 
         # 誤差関数=クロスエントロピー
-        cross_entropy = self.get_cross_entropy()
+        self.cross_entropy = self.get_cross_entropy()
 
         # 学習ステップ生成
-        self.train_step = self.get_train_step(cross_entropy)
+        self.train_step = self.get_train_step(self.cross_entropy)
 
     #################################################
     # モデルを保存する
