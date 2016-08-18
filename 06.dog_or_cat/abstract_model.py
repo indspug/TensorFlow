@@ -84,9 +84,36 @@ class AbstractModel(object):
         self.session.run(init)
 
     #################################################
-    # モデルのロード
+    # モデルのロード(学習再開用)
     #################################################
-    def load(self):
+    def load_for_train(self):
+
+        # Variableの初期化
+        self.initialize_variables()
+
+        # 誤差関数=クロスエントロピー
+        self.cross_entropy = self.get_cross_entropy()
+
+        # 学習ステップ生成
+        self.train_step = self.get_train_step(self.cross_entropy)
+
+        # セッション生成
+        self.session = tf.Session()
+
+        # Variableの初期化
+        init = tf.initialize_all_variables()
+        self.session.run(init)
+
+        # 保存したモデルを読み込む。
+        checkpoint_dir = os.path.dirname(self.checkpoint)
+        checkpoint_file = os.path.basename(self.checkpoint)
+        variables = self.get_saveable_variables()
+        model_saver.restore_model(self.session, variables, checkpoint_dir, checkpoint_file)
+
+    #################################################
+    # モデルのロード(テスト用)
+    #################################################
+    def load_for_test(self):
 
         # Variableの初期化
         self.initialize_variables()
@@ -97,18 +124,8 @@ class AbstractModel(object):
         # 保存したモデルを読み込む。
         checkpoint_dir = os.path.dirname(self.checkpoint)
         checkpoint_file = os.path.basename(self.checkpoint)
-        model_saver.restore_model(self.session, checkpoint_dir, checkpoint_file)
-
-    #################################################
-    # 学習の準備
-    #################################################
-    def ready_for_train(self):
-
-        # 誤差関数=クロスエントロピー
-        self.cross_entropy = self.get_cross_entropy()
-
-        # 学習ステップ生成
-        self.train_step = self.get_train_step(self.cross_entropy)
+        variables = self.get_saveable_variables()
+        model_saver.restore_model(self.session, variables, checkpoint_dir, checkpoint_file)
 
     #################################################
     # モデルを保存する

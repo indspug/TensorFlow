@@ -10,13 +10,13 @@ import image_editor
 from dog_or_cat_model import DogOrCatModel
 
 # 定数
-IMAGE_WIDTH = 135    # 入力画像の幅
-IMAGE_HEIGHT = 135   # 入力画像の高さ
+IMAGE_WIDTH = 28    # 入力画像の幅
+IMAGE_HEIGHT = 28   # 入力画像の高さ
 COLOR_CHANNELS = 3  # カラーチャンネルの数
 NUM_CLASSES = 2     # 正解(ラベル)の数(種類)
 BATCH_SIZE = 20     # バッチサイズ
-STEPS = 1000         # 学習ステップ
-SAVE_STEP = 50      # 一定ステップごとにモデルを保存する
+STEPS = 500         # 学習ステップ
+SAVE_STEP = 20      # 一定ステップごとにモデルを保存する
 
 #################################################
 # ログ出力
@@ -69,8 +69,9 @@ def train(checkpoint_path, train_image_rootdir, continuation, start_step):
     model = DogOrCatModel(IMAGE_WIDTH, IMAGE_HEIGHT, COLOR_CHANNELS, NUM_CLASSES, checkpoint_path)
     if (continuation):
         write_log('Restore model')
-        model.load()
-        model.ready_for_train()
+        model.load_for_train()
+        #model.load()
+        #model.ready_for_train()
     else:
         write_log('Construct model')
         model.construct()
@@ -105,7 +106,7 @@ def test(checkpoint_path, test_image_rootdir):
     # モデルオブジェクトのロード
     write_log('Load model')
     model = DogOrCatModel(IMAGE_WIDTH, IMAGE_HEIGHT, COLOR_CHANNELS, NUM_CLASSES, checkpoint_path)
-    model.load()
+    model.load_for_test()
 
     # テストの実行
     write_log('Start test')
@@ -131,7 +132,7 @@ def demo(checkpoint_path, imagefile_path, resultfile_path):
     # モデルオブジェクトのロード
     write_log('Load model')
     model = DogOrCatModel(IMAGE_WIDTH, IMAGE_HEIGHT, COLOR_CHANNELS, NUM_CLASSES, checkpoint_path)
-    model.load()
+    model.load_for_test()
 
     # 学習の実行
     write_log('Start demo')

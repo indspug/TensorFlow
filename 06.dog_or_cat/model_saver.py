@@ -36,16 +36,17 @@ def save_model(session, variables, checkpoint_dir, checkpoint_name, global_step=
 #################################################
 # モデルの読込
 # [Args]:
-#    session:tf.Session
+#    session       :tf.Session
+#    variables     :復元するVariables([tf.Variables, ...])
 #    checkpoint_dir:読込むチェックポイントが格納されているディレクトリ
 #    checkpoint_name:読込むチェックポイントのファイル名
 #################################################
-def restore_model(session, checkpoint_dir, filename):
+def restore_model(session, variables, checkpoint_dir, filename):
 
     # チェックポイントの存在確認
     if exists_checkpoint(checkpoint_dir, filename):
         filepath = os.path.join(checkpoint_dir, filename)
-        saver = tf.train.Saver()
+        saver = tf.train.Saver(variables)
         saver.restore(session, filepath)
     else:
         filepath = os.path.join(checkpoint_dir, filename)
