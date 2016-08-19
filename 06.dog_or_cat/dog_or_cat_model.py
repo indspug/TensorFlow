@@ -146,7 +146,8 @@ class DogOrCatModel(AbstractModel):
     def get_cross_entropy(self):
         # 誤差関数=クロスエントロピー
         cross_entropy = tf.reduce_mean(
-            -tf.reduce_sum(self.y_ * tf.log(self.y_conv), reduction_indices=[1], name='sum'), name='cross_entropy')
+            -tf.reduce_sum(self.y_ * tf.log(tf.clip_by_value(self.y_conv, 1e-15, 1.0)), reduction_indices=[1], name='sum'), name = 'cross_entropy')
+            # -tf.reduce_sum(self.y_ * tf.log(self.y_conv), reduction_indices=[1], name='sum'), name='cross_entropy')
         return(cross_entropy)
 
     #################################################
@@ -157,7 +158,7 @@ class DogOrCatModel(AbstractModel):
     #    train_step:
     #################################################
     def get_train_step(self, cross_entropy):
-        train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy, name='train_step')
+        train_step = tf.train.AdamOptimizer(5e-5).minimize(cross_entropy, name='train_step')
         #train_step = tf.train.GradientDescentOptimizer(1e-2).minimize(cross_entropy, name='train_step')
         #train_step = tf.train.MomentumOptimizer(1e-2, 1e-2).minimize(cross_entropy, name='train_step')
         #train_step = tf.train.AdagradOptimizer(1e-5).minimize(cross_entropy, name='train_step')
