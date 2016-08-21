@@ -6,6 +6,9 @@
 from abstract_model import AbstractModel
 import tensorflow as tf
 import random
+import cv2
+import numpy
+import os
 
 # 定数
 #FILTER_SIZE1 = 5        # 畳込層1のフィルタサイズ
@@ -25,7 +28,7 @@ class DogOrCatModel(AbstractModel):
     def weight_variable(self, shape, name=None):
         # 正規分布に従うランダム値を返す。stddevは標準偏差
         initial = tf.truncated_normal(shape, stddev=0.01)
-        return tf.Variable(initial, name)
+        return tf.Variable(initial, name=name)
 
     #################################################
     # 初期化されたバイアスVariableを返す
@@ -33,7 +36,7 @@ class DogOrCatModel(AbstractModel):
     def bias_variable(self, shape, name=None):
         # 0.1固定
         initial = tf.constant(0.1, shape=shape)
-        return tf.Variable(initial, name)
+        return tf.Variable(initial, name=name)
 
     #################################################
     # 畳み込みを行い特徴マップを返す
@@ -158,7 +161,7 @@ class DogOrCatModel(AbstractModel):
     #    train_step:
     #################################################
     def get_train_step(self, cross_entropy):
-        train_step = tf.train.AdamOptimizer(5e-5).minimize(cross_entropy, name='train_step')
+        train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy, name='train_step')
         #train_step = tf.train.GradientDescentOptimizer(1e-2).minimize(cross_entropy, name='train_step')
         #train_step = tf.train.MomentumOptimizer(1e-2, 1e-2).minimize(cross_entropy, name='train_step')
         #train_step = tf.train.AdagradOptimizer(1e-5).minimize(cross_entropy, name='train_step')
@@ -284,3 +287,76 @@ class DogOrCatModel(AbstractModel):
 
 
         return(scores)
+
+    #################################################
+    # フィルタの可視化を行う
+    # [Args]:
+    #    dst_dir:出力先ディレクトリ
+    #################################################
+    def visualize_variables(self, dst_dir):
+
+        # ------------------------------
+        # First Convolutional Layer
+        # ------------------------------
+        name = 'W_conv1'
+        dir =  os.path.join(dst_dir, name)
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+
+        # tf.Variableをndarrayに変換
+        W_conv1 = self.W_conv1.eval(self.session)
+        width = W_conv1.shape[0]
+        height = W_conv1.shape[1]
+        color = W_conv1.shape[2]
+        num = W_conv1.shape[3]
+
+        # 値を0〜255に変換
+        max = numpy.max(W_conv1)
+        min = numpy.min(W_conv1)
+        W_conv1_0to1 = (W_conv1 - min) / (max - min)
+        W_conv1_0to255 = W_conv1_0to1 * 255.0
+
+        # フィルタの個数分ループ
+        for n in range(num):
+
+            # (width, height, 1, 1) -> (width, height, 1)
+            filter = W_conv1_0to255[:,:,:,n:n+1].reshape((width, height, color))
+
+            # jpgで保存
+            filename = name + '_' + str(n) + ".jpg"
+            filepath = os.path.join(dir, filename)
+            cv2.imwrite(filepath, filter)
+
+        # ------------------------------
+        # Second Convolutional Layer
+        # ------------------------------
+        name = 'W_conv2'
+        dir = os.path.join(dst_dir, name)
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+
+        # tf.Variableをndarrayに変換
+        W_conv2 =self.W_conv2.eval(self.session)
+        width = W_conv2.shape[0]
+        height = W_conv2.shape[1]
+        num_sub = W_conv2.shape[2]
+        num_main = W_conv2.shape[3]
+
+        # 値を0〜255に変換
+        max = numpy.max(W_conv2)
+        min = numpy.min(W_conv2)
+        W_conv2_0to1 = (W_conv2 - min) / (max - min)
+        W_conv2_0to255 = W_conv2_0to1 * 255.0
+
+        # フィルタの個数分ループ
+        for n_main in range(num_main):
+            for n_sub in range(num_sub):
+
+                # (width, height, 1, 1) -> (width, height, 1)
+                filter = W_conv2_0to255[:, :, n_sub, n_main].reshape((width, height, 1))
+
+                # jpgで保存
+                filename = name + '_' + str(n_main) + '_' + str(n_sub) + ".jpg"
+                filepath = os.path.join(dir, filename)
+                cv2.imwrite(filepath, filter)
+

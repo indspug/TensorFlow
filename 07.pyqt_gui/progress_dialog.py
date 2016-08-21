@@ -37,7 +37,8 @@ class IdentifyThread(QThread):
             status = e.returncode
 
         if status != 0:
-            reply = QMessageBox.warning(self, 'Error', '画像識別に失敗しました')
+            print(status)
+            reply = QMessageBox.warning(None, 'Error', '画像識別に失敗しました')
 
         # 終了を通知
         self.finished.emit()

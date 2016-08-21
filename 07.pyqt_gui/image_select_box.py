@@ -79,6 +79,9 @@ class ImageSelectBox(QWidget):
         for filename in del_filenames:
             self.image_files.remove(filename)
 
+        # 昇順でソート
+        self.image_files.sort()
+
         # コンボボックスの表示を更新
         self.comboBox.clear()
         for filename in self.image_files:

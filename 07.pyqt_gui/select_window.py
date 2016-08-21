@@ -7,7 +7,6 @@ import os
 import sys
 import subprocess
 import csv
-from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, \
                             QHBoxLayout, QVBoxLayout, QMessageBox, \
                             QDialog
@@ -18,10 +17,10 @@ from result_window import ResultWindow
 
 # Constant
 DEMO_EXE_PATH = '../06.dog_or_cat/main.py demo'
+TAKE_PICTURE_EXE_PATH = '../08.take_picture/take_picture.py'
 IMAGE_DIR = './image'
 CKPT_DIR = '../06.dog_or_cat/ckpt'
 RESULT_CSV = './score.csv'
-
 
 #################################################
 # 選択画面
@@ -52,6 +51,10 @@ class SelectWindow(QWidget):
         self.ckptSlctBox.update()
         layout.addWidget(self.ckptSlctBox)
 
+        # Take Picture Button
+        self.takePictureButton = QPushButton('撮影')
+        self.takePictureButton.clicked.connect(self.take_picture)
+
         # Identify Button
         self.identifyButton = QPushButton('識別開始')
         self.identifyButton.clicked.connect(self.identify)
@@ -63,6 +66,7 @@ class SelectWindow(QWidget):
         # Buttons Layout
         btnLayout = QHBoxLayout()
         btnLayout.addStretch(2)
+        btnLayout.addWidget(self.takePictureButton, 0)
         btnLayout.addWidget(self.identifyButton, 0)
         btnLayout.addWidget(self.closeButton, 0)
         layout.addLayout(btnLayout)
@@ -71,6 +75,25 @@ class SelectWindow(QWidget):
         self.setWindowTitle('画像識別')
 
         self.setLayout(layout)
+
+    #################################################
+    # 撮影ボタンクリックイベント
+    #################################################
+    def take_picture(self):
+
+        cmd = 'python ' + TAKE_PICTURE_EXE_PATH + ' ' + IMAGE_DIR
+
+        # 識別実行
+        try:
+            status = subprocess.check_call(cmd.split(' '))
+        except subprocess.CalledProcessError, e:
+            status = e.returncode
+
+        if status != 0:
+            reply = QMessageBox.warning(self, 'Error', '画像識別に失敗しました')
+
+        # 画像選択ボックスの表示更新
+        self.imgSlctBox.update()
 
     #################################################
     # 識別開始ボタンクリックイベント

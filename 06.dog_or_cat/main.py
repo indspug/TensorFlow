@@ -15,7 +15,7 @@ IMAGE_HEIGHT = 28   # 入力画像の高さ
 COLOR_CHANNELS = 3  # カラーチャンネルの数
 NUM_CLASSES = 2     # 正解(ラベル)の数(種類)
 BATCH_SIZE = 20     # バッチサイズ
-STEPS = 1000         # 学習ステップ
+STEPS = 1000        # 学習ステップ
 SAVE_STEP = 20      # 一定ステップごとにモデルを保存する
 
 #################################################
@@ -36,6 +36,7 @@ def print_usage(exe_name):
     print('Usage: # python %s train [checkpoint] [image_dir] [continuation] [start_step]' % exe_name)
     print('Usage: # python %s test  [checkpoint] [image_dir]' % exe_name)
     print('Usage: # python %s demo  [checkpoint] [imagefile] [resultfile]' % exe_name)
+    print('Usage: # python %s visualize  [checkpoint] [dst_dir]' % exe_name)
     print('  checkpoint   : filepath of checkpoint.')
     print('  image_dir    : root directory of image directories.')
     print('  continuation : whether to continue training or not (optional).')
@@ -62,6 +63,7 @@ def train(checkpoint_path, train_image_rootdir, continuation, start_step):
         if os.path.isdir(dir):
             train_image_dirs.append(dir)
 
+    train_image_dirs.sort()
     images, labels = image_editor.get_labeled_images(train_image_dirs)
     images = image_editor.resize_images(images, IMAGE_WIDTH, IMAGE_HEIGHT)
 
@@ -100,6 +102,7 @@ def test(checkpoint_path, test_image_rootdir):
         if os.path.isdir(dir):
             test_image_dirs.append(dir)
 
+    test_image_dirs.sort()
     images, labels = image_editor.get_labeled_images(test_image_dirs)
     images = image_editor.resize_images(images, IMAGE_WIDTH, IMAGE_HEIGHT)
 
@@ -152,6 +155,45 @@ def demo(checkpoint_path, imagefile_path, resultfile_path):
     fout = open(resultfile_path, 'w')
     csvWriter = csv.writer(fout)
     csvWriter.writerows(scores)
+    fout.close()
+
+#################################################
+# 結果出力実行
+# [Args]:
+#    checkpoint_path :チェックポイントのファイルパス
+#    imagefile_dir  :デモ用画像のファイル格納ディレクトリ
+#    resultfile_path :識別結果出力先ファイルパス
+#################################################
+def eval(checkpoint_path, imagefile_dir, resultfile_path):
+
+    # デモ用画像の読込みとリサイズ
+    image_files = []
+    for filename in os.listdir(imagefile_dir):
+        filepath = os.path.join(imagefile_dir, filename)
+        image_files.append(filepath)
+    images = image_editor.get_images(image_files)
+    images = image_editor.resize_images(images, IMAGE_WIDTH, IMAGE_HEIGHT)
+
+    # モデルオブジェクトのロード
+    write_log('Load model')
+    model = DogOrCatModel(IMAGE_WIDTH, IMAGE_HEIGHT, COLOR_CHANNELS, NUM_CLASSES, checkpoint_path)
+    model.load_for_test()
+
+    # 学習の実行
+    write_log('Start eval')
+    scores = model.get_scores(images)
+
+    # ファイル名と結果を結合
+    results = []
+    for i, filename in enumerate(image_files):
+        result = [filename]
+        result.extend(scores[i])
+        results.append(result)
+
+    # スコアをCSVに出力
+    fout = open(resultfile_path, 'w')
+    csvWriter = csv.writer(fout)
+    csvWriter.writerows(results)
     fout.close()
 
 #################################################
@@ -223,6 +265,30 @@ if __name__ == '__main__':
         resultfile_path = argvs[4]
 
         demo(checkpoint_path, imagefile_path, resultfile_path)
+
+    # 結果出力用モード
+    elif mode == 'eval':
+
+        # コマンドライン引数取得
+        if argc < 5:
+            print_usage(argvs[0])
+            quit()
+
+        checkpoint_path = argvs[2]
+        imagefile_dir = argvs[3]
+        resultfile_path = argvs[4]
+
+        eval(checkpoint_path, imagefile_dir, resultfile_path)
+
+    # 可視化モード
+    elif mode == 'visualize':
+
+        checkpoint_path = argvs[2]
+        dst_dir = argvs[3]
+
+        model = DogOrCatModel(IMAGE_WIDTH, IMAGE_HEIGHT, COLOR_CHANNELS, NUM_CLASSES, checkpoint_path)
+        model.load_for_test()
+        model.visualize_variables(dst_dir)
 
     else:
         print_usage(argvs[0])

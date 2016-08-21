@@ -57,6 +57,7 @@ class CheckpointSelectBox(QWidget):
 
         # ディレクトリ内にあるファイル名を追加する
         files = os.listdir(self.checkpoin_dir)
+        files.sort()
         for filepath in files:
             filename = os.path.basename(filepath)
             self.comboBox.addItem(filename)
