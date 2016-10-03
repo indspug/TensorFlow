@@ -144,6 +144,8 @@ def build_estimator(model_dir):
       hours_per_week,
   ]
 
+  # 実行時引数でmodel_typeに"wide"が指定されたら"LinearClassifier",
+  # "deep"が指定された"DNNClassifier"を使用する。
   if FLAGS.model_type == "wide":
     m = tf.contrib.learn.LinearClassifier(model_dir=model_dir,
                                           feature_columns=wide_columns)
@@ -160,23 +162,39 @@ def build_estimator(model_dir):
   return m
 
 
+#################################################
+# 入力データ設定
+#################################################
 def input_fn(df):
   """Input builder function."""
   # Creates a dictionary mapping from each continuous feature column name (k) to
   # the values of that column stored in a constant Tensor.
+  # No列作成(1〜データ数の自然数の列を作成)
   continuous_cols = {k: tf.constant(df[k].values) for k in CONTINUOUS_COLUMNS}
+
   # Creates a dictionary mapping from each categorical feature column name (k)
   # to the values of that column stored in a tf.SparseTensor.
+  #   indices: A 2-D int64 tensor of shape [N, ndims].
+  #   values: A 1-D tensor of any type and shape [N].
+  #   shape: A 1-D int64 tensor of shape [ndims].
+  # kはディクショナリのキー。CATEGORICAL_COLUMNSから取得。
+  # df自体がディクショナリ。
   categorical_cols = {k: tf.SparseTensor(
       indices=[[i, 0] for i in range(df[k].size)],
       values=df[k].values,
       shape=[df[k].size, 1])
                       for k in CATEGORICAL_COLUMNS}
+
   # Merges the two dictionaries into one.
+  # ディクショナリ合体。
   feature_cols = dict(continuous_cols)
   feature_cols.update(categorical_cols)
+
   # Converts the label column into a constant Tensor.
+  # ラベル列をTensorに変換。
+  # ラベル列：収入が50,000以上か否か
   label = tf.constant(df[LABEL_COLUMN].values)
+
   # Returns the feature columns and the label.
   return feature_cols, label
 
@@ -217,8 +235,15 @@ def train_and_eval():
   model_dir = tempfile.mkdtemp() if not FLAGS.model_dir else FLAGS.model_dir
   print("model directory = %s" % model_dir)
 
+  # Estimatorの初期化、設定
   m = build_estimator(model_dir)
+
+  # 学習
+  #   m : LinearClassifier or DNNClassifier or DNNLinearCombinedClassifier
   m.fit(input_fn=lambda: input_fn(df_train), steps=FLAGS.train_steps)
+
+  # テスト
+  #   resultsの中身は自動？
   results = m.evaluate(input_fn=lambda: input_fn(df_test), steps=1)
   for key in sorted(results):
     print("%s: %s" % (key, results[key]))
